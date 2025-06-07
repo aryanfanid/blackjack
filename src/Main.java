@@ -1,20 +1,27 @@
-import java.util.Scanner;
-
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     public static void main(String[] args) {
-        Game blackjack = new Game();
-
-        blackjack.dealCards();
         while (true) {
-            blackjack.printPlayerHand();
-            blackjack.printDealerHand();
+            Game blackjack = new Game();
 
-            blackjack.promptOperation();
+            blackjack.dealCards();
+            while (true) {
+                blackjack.clearConsole();
+                blackjack.printPlayerHand();
+                blackjack.printDealerHand();
+                if (blackjack.gameOver) {
+                    blackjack.printGameStatus();
+                    break;
+                }
+                blackjack.promptOperation();
+            }
 
-            blackjack.play();
+            System.out.println("\nStarting a new game in 3 seconds...");
+
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-//        blackjack.closeScanner();
     }
 }

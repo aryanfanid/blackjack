@@ -10,13 +10,9 @@ enum Suit {
         this.symbol = symbol;
     }
 
-    public String getSymbol() {
-        return symbol;
-    }
-
     @Override
     public String toString() {
-        return name().charAt(0) + name().substring(1).toLowerCase() + " " + symbol;
+        return symbol;
     }
 }
 
@@ -61,6 +57,6 @@ public class Card {
 
     @Override
     public String toString() {
-        return rank + " of " + suit + " (Value: " + getBlackjackValue() + ")";
+        return "    " + rank + " of " + suit;
     }
 }

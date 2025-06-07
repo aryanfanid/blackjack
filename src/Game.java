@@ -1,19 +1,27 @@
-import java.sql.SQLOutput;
 import java.util.*;
 
 public class Game {
     private List<Card> deck;
-    private List<Card> playerHand;
-    private List<Card> dealerHand;
+    private Hand playerHand;
+    private Hand dealerHand;
 
-    private Random random;
-    private Scanner scanner;
+    private final Random random;
+    private final Scanner scanner;
+
     private boolean hideDealerCard = true;
+    public boolean gameOver = false;
+    private String status;
+
+    public static final String RESET = "\033[0m";
+    public static final String RED = "\033[0;31m";
+    public static final String GREEN = "\033[0;32m";
+    public static final String YELLOW = "\033[0;33m";
+    public static final String BLUE = "\033[0;34m";
 
     public Game() {
         deck = new ArrayList<>();
-        playerHand = new ArrayList<>();
-        dealerHand = new ArrayList<>();
+        playerHand = new Hand();
+        dealerHand = new Hand();
 
         random = new Random();
         scanner = new Scanner(System.in);
@@ -25,52 +33,53 @@ public class Game {
         }
     }
 
-    public void closeScanner() {
-        scanner.close();
-    }
-
     public Card drawCard() {
         int index = random.nextInt(deck.size());
         return deck.remove(index);
     }
 
+    public void dealCard(Hand hand) {
+        Card card = drawCard();
+        hand.cards.add(card);
+        hand.cardsTotal += card.getBlackjackValue();
+    }
+
     public void dealCards() {
-        playerHand.add(drawCard());
-        dealerHand.add(drawCard());
-        playerHand.add(drawCard());
-        dealerHand.add(drawCard());
+        dealCard(playerHand);
+        dealCard(dealerHand);
+        dealCard(playerHand);
+        dealCard(dealerHand);
+
+        if (playerHand.cardsTotal == 21) {
+            status = BLUE + "BlackJack!" + RESET;
+            gameOver = true;
+        }
+    }
+
+    public void clearConsole() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
     }
 
     public void printPlayerHand() {
-        System.out.println("========== PLAYER HAND ==========");
-        int total = 0;
-        for (Card card : playerHand) {
-            total += card.getBlackjackValue();
+        System.out.println("========== PLAYER HAND ==========\n");
+        for (Card card : playerHand.cards) {
             System.out.println(card);
         }
-        System.out.println("---------- TOTAL VALUE: " + total + " ----------\n");
+        System.out.println("\n-------- TOTAL VALUE: " + playerHand.cardsTotal + " --------\n");
     }
 
     public void printDealerHand() {
-        System.out.println("========== DEALER HAND ==========");
-        int total = 0;
-        for (int i = 0; i < dealerHand.size(); i++) {
-
+        System.out.println("========== DEALER HAND ==========\n");
+        for (int i = 0; i < dealerHand.cards.size(); i++) {
             if (hideDealerCard && i == 1) {
-                System.out.println("***** of ***** * (Value: Unknown)");
+                System.out.println("    ***** of *");
             } else {
-                Card card = dealerHand.get(i);
-                total += card.getBlackjackValue();
+                Card card = dealerHand.cards.get(i);
                 System.out.println(card);
             }
         }
-        System.out.println("---------- TOTAL VALUE: " + total + " ----------\n");
-    }
-
-    public void printCards() {
-        for (Card card : deck) {
-            System.out.println(card);
-        }
+        System.out.println("\n-------- TOTAL VALUE: " + (hideDealerCard ? "**" : dealerHand.cardsTotal) + " --------\n");
     }
 
     private boolean validateInput(String input) {
@@ -78,22 +87,37 @@ public class Game {
         return answers.contains(input);
     }
 
-    private void showDealerCard() {
-        this.hideDealerCard = false;
-    }
-
     private void hit() {
-        playerHand.add(drawCard());
+        dealCard(playerHand);
+        if (playerHand.cardsTotal > 21) {
+            status = YELLOW + "Bust!" + RESET;
+            gameOver = true;
+        } else if (playerHand.cardsTotal == 21) {
+            status = BLUE + "BlackJack!" + RESET;
+            gameOver = true;
+        }
     }
 
     private void stand() {
+        this.hideDealerCard = false;
+        while (dealerHand.cardsTotal < playerHand.cardsTotal) {
+            dealCard(dealerHand);
+
+        }
+        if (dealerHand.cardsTotal.equals(playerHand.cardsTotal)) {
+            status = YELLOW + "Push!" + RESET;
+        } else if (dealerHand.cardsTotal <= 21) {
+            status = RED + "Dealer Wins!" + RESET;
+        } else {
+            status = GREEN + "Player Wins!" + RESET;
+        }
+        gameOver = true;
     }
 
     public void promptOperation() {
-        System.out.print("You wanna (H)it or (S)tand? ");
+        System.out.print("\n(H)it or (S)tand? ");
 
         String input = scanner.nextLine();
-
         boolean valid = this.validateInput(input);
 
         if (valid) {
@@ -103,11 +127,13 @@ public class Game {
             if (input.equals("s")) {
                 this.stand();
             }
+        } else {
+            System.out.println("Enter valid input!");
+            promptOperation();
         }
-        this.showDealerCard();
     }
 
-    public void play() {
-        System.out.println("Playing...");
+    public void printGameStatus() {
+        System.out.println(status);
     }
 }
